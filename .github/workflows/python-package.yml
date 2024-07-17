@@ -1,8 +1,11 @@
+name: OWASP Dependency Check scan
+
 on:
   push:
     branches: 
       - master 
   pull_request: {}
+  workflow_dispatch:
 
 jobs:
   dependency_check:
@@ -27,16 +30,19 @@ jobs:
           echo "No package manager lockfile found."
           exit 1
 
+    - name: Install OWASP Dependency Check
+      run: |
+        wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.1.2/dependency-check-8.1.2-release.zip
+        unzip dependency-check-8.1.2-release.zip -d dependency-check
+        chmod +x dependency-check/bin/dependency-check.sh
+
     - name: Run OWASP Dependency Check
-      uses: dependency-check/cli-action@v2
-      with:
-        project: 'P4_DDoS'
-        scan: '.'
-        format: 'ALL'
-        out: './dependency-check-report'
+      run: |
+        dependency-check/bin/dependency-check.sh --project "P4_DDoS" --scan . --format "ALL" --out dependency-check-report
     
     - name: Upload Dependency Check Report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
+      if: ${{ always () }}
       with:
         name: dependency-check-report
         path: dependency-check-report
