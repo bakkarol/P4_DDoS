@@ -1,0 +1,43 @@
+on:
+  push:
+    branches: 
+      - master 
+  pull_request: {}
+
+jobs:
+  dependency_check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16' 
+    
+    - name: Install dependencies
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        elif [ -f yarn.lock ]; then
+          yarn install --frozen-lockfile
+        else
+          echo "No package manager lockfile found."
+          exit 1
+
+    - name: Run OWASP Dependency Check
+      uses: dependency-check/cli-action@v2
+      with:
+        project: 'P4_DDoS'
+        scan: '.'
+        format: 'ALL'
+        out: './dependency-check-report'
+    
+    - name: Upload Dependency Check Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: dependency-check-report
+        path: dependency-check-report
+
